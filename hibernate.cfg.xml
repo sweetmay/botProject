@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD//EN"
+        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+<session-factory>
+
+    <property name="hibernate.hbm2ddl.auto">update</property>
+    <property name="hibernate.connection.url">jdbc:postgresql://127.0.0.1:5432/botDB</property>
+    <property name="hibernate.connection.username">test</property>
+    <property name="hibernate.connection.password">test</property>
+    <property name="hibernate.dialect">org.hibernate.dialect.PostgresPlusDialect</property>
+
+    <!-- Other configuration -->
+</session-factory>
+
+</hibernate-configuration>
