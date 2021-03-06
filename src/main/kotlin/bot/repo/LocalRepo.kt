@@ -1,5 +1,3 @@
 package bot.repo
 
-class LocalRepo: IRepo {
-
-}
+class LocalRepo: IRepo

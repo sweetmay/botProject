@@ -85,5 +85,4 @@
     <orderEntry type="library" name="Gradle: com.sun.xml.fastinfoset:FastInfoset:1.2.15" level="project" />
     <orderEntry type="library" name="Gradle: org.glassfish.grizzly:grizzly-framework:2.4.4" level="project" />
   </component>
-  <component name="TestModuleProperties" production-module="botProject.main" />
 </module>

@@ -6,10 +6,11 @@
 <session-factory>
 
     <property name="hibernate.hbm2ddl.auto">update</property>
-    <property name="hibernate.connection.url">jdbc:postgresql://127.0.0.1:5432/botDB</property>
-    <property name="hibernate.connection.username">test</property>
-    <property name="hibernate.connection.password">test</property>
+    <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/botdb</property>
+    <property name="hibernate.connection.username">postgres</property>
+    <property name="hibernate.connection.password">111</property>
     <property name="hibernate.dialect">org.hibernate.dialect.PostgresPlusDialect</property>
+    <property name="show_sql">true</property>
 
     <!-- Other configuration -->
 </session-factory>

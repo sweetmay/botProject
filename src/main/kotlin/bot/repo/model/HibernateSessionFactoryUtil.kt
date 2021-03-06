@@ -5,22 +5,19 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder
 import org.hibernate.cfg.Configuration
 
 class HibernateSessionFactoryUtil {
-    companion object{
-        private val sessionFactory: SessionFactory? = null
-        fun getSessionFactory(){
-            if(sessionFactory == null)  {
-                try {
-                    val config = Configuration().configure()
-                    sessionFactory ?: {
-                        config.addAnnotatedClass(User::class.java)
-                        val builder = StandardServiceRegistryBuilder()
-                            .applySettings(config.properties)
 
 
-                    }
-                }
-            }
-        }
+    companion object {
+        private lateinit var factory: SessionFactory
+
+        fun getSessionFactory(): SessionFactory {
+            val config = Configuration().configure()
+            config.addAnnotatedClass(User::class.java)
+            val builder = StandardServiceRegistryBuilder()
+                .applySettings(config.properties)
+            factory = config.buildSessionFactory(builder.build())
+            return factory
     }
+}
 
 }
