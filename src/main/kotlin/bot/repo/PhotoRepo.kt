@@ -14,14 +14,8 @@ import java.io.File
 
 
 class PhotoRepo(
-    private val userDAO: UserDAO,
     private val tgMethods: BaseTelegramMethods
 ) : IPhotoRepo {
-
-    override fun rememberUser(userModel: UserModel) {
-        userDAO.saveOrUpdate(userModel)
-    }
-
 
     override fun getPhoto(update: Update): String {
 

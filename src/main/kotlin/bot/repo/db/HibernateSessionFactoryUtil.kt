@@ -18,7 +18,7 @@ class HibernateSessionFactoryUtil {
                 .applySettings(config.properties)
             factory = config.buildSessionFactory(builder.build())
             return factory
+        }
     }
-}
 
 }

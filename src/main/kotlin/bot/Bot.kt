@@ -1,21 +1,23 @@
 package bot
 
-import bot.exception.InvalidFormatException
+import bot.presenter.IMsgHandler
+import bot.presenter.MsgHandler
 import bot.repo.PhotoRepo
 import bot.repo.model.UserDAOImpl
-import bot.repo.model.UserModel
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.Update
 import java.io.*
 import java.util.*
 
 class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
-    private val photoRepo = PhotoRepo(UserDAOImpl(), this)
+    private val msgHandler: IMsgHandler = MsgHandler(UserDAOImpl(), PhotoRepo(this), this)
     private val input = FileInputStream("app")
     private val properties: Properties = Properties()
+
 
     companion object{
         const val API_KEY_PROP = "api"
@@ -24,12 +26,6 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
     init {
         properties.load(input)
-//        val process = Runtime.getRuntime().exec("myqr https://github.com")
-//        val outStream = process.inputStream
-//        val reader = BufferedReader(InputStreamReader(outStream, StandardCharsets.UTF_8))
-//        reader.lines().forEach {
-//            println(it)
-//        }
     }
 
     override fun getBotToken(): String =
@@ -41,22 +37,26 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
     override fun onUpdateReceived(update: Update?) {
         update?.let {
-            photoRepo.rememberUser(UserModel.createFromTGUser(it.message.from))
-            try {
-                photoRepo.getPhoto(update)
-            }catch (e: InvalidFormatException){
-                val msg = SendMessage()
-                msg.chatId = it.message.from.id.toString()
-                msg.text = e.message.toString()
-                execute(msg)
-            }
-
+            msgHandler.handleCommands(update)
+            msgHandler.handlePhoto(update)
         }
     }
 
     override fun execDownloadFile(getFile: GetFile): File {
         val file = execute(getFile)
         return downloadFile(file)
+    }
+
+    override fun showError(msg: SendMessage) {
+        execute(msg)
+    }
+
+    override fun askForData(msg: SendMessage) {
+        execute(msg)
+    }
+
+    override fun replyWithResult(qrResult: SendPhoto) {
+        execute(qrResult)
     }
 
 }

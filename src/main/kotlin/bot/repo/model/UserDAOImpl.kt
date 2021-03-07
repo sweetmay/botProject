@@ -18,7 +18,11 @@ class UserDAOImpl : UserDAO{
     }
 
     override fun updateUser(userModel: UserModel) {
-        TODO("Not yet implemented")
+        val session: Session = HibernateSessionFactoryUtil.getSessionFactory().openSession()
+        val tx1: Transaction = session.beginTransaction()
+        session.update(userModel)
+        tx1.commit()
+        session.close()
     }
 
     override fun findAllUsers(): List<UserModel> {
