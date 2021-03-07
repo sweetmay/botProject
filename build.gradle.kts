@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     java
     kotlin("jvm") version "1.4.30"
@@ -14,6 +16,12 @@ repositories {
 
 configurations.all {
     exclude("org.slf4j", "impl.StaticLoggerBinder")
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {

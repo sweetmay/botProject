@@ -1,5 +1,6 @@
-package bot.repo.model
+package bot.repo.db
 
+import bot.repo.model.UserModel
 import org.hibernate.SessionFactory
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder
 import org.hibernate.cfg.Configuration
@@ -12,7 +13,7 @@ class HibernateSessionFactoryUtil {
 
         fun getSessionFactory(): SessionFactory {
             val config = Configuration().configure()
-            config.addAnnotatedClass(User::class.java)
+            config.addAnnotatedClass(UserModel::class.java)
             val builder = StandardServiceRegistryBuilder()
                 .applySettings(config.properties)
             factory = config.buildSessionFactory(builder.build())

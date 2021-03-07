@@ -1,26 +1,27 @@
 package bot.repo.model
 
+import bot.repo.db.HibernateSessionFactoryUtil
 import org.hibernate.Session
 import org.hibernate.Transaction
 
 class UserDAOImpl : UserDAO{
-    override fun getUserById(id: Int): User? {
-        return HibernateSessionFactoryUtil.getSessionFactory().openSession().get(User::class.java, id)
+    override fun getUserById(id: Int): UserModel? {
+        return HibernateSessionFactoryUtil.getSessionFactory().openSession().get(UserModel::class.java, id)
     }
 
-    override fun saveUser(user: User) {
+    override fun saveOrUpdate(userModel: UserModel) {
         val session: Session = HibernateSessionFactoryUtil.getSessionFactory().openSession()
         val tx1: Transaction = session.beginTransaction()
-        session.save(user)
+        session.saveOrUpdate(userModel)
         tx1.commit()
         session.close()
     }
 
-    override fun updateUser(user: User) {
+    override fun updateUser(userModel: UserModel) {
         TODO("Not yet implemented")
     }
 
-    override fun findAllUsers(): List<User> {
+    override fun findAllUsers(): List<UserModel> {
         TODO("Not yet implemented")
     }
 }

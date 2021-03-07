@@ -7,9 +7,6 @@ import org.apache.log4j.PropertyConfigurator
 
 import java.util.Properties
 
-
-
-
 fun main(args: Array<String>){
     loggerInit()
     botInit()
@@ -19,7 +16,7 @@ fun main(args: Array<String>){
 private fun botInit() {
     try {
         val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
-        botsApi.registerBot(Bot(LocalRepo()))
+        botsApi.registerBot(Bot())
     } catch (e: TelegramApiException) {
         e.printStackTrace()
     }
