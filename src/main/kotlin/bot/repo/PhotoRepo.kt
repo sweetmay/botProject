@@ -13,20 +13,21 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import java.io.File
 
 
-class LocalRepo(
+class PhotoRepo(
     private val userDAO: UserDAO,
     private val tgMethods: BaseTelegramMethods
-) : IRepo {
+) : IPhotoRepo {
 
     override fun rememberUser(userModel: UserModel) {
         userDAO.saveOrUpdate(userModel)
     }
 
 
-    override fun getPhoto(update: Update) {
+    override fun getPhoto(update: Update): String {
+
         getPhotoSize(update)?.let { photo ->
             if (!photo.filePath.isNullOrEmpty()) {
-                savePhoto(
+                return savePhoto(
                     tgMethods.execDownloadFile(GetFile(photo.filePath)),
                     update.message.from.id.toString()
                 )
@@ -34,7 +35,7 @@ class LocalRepo(
                 val getFileMethod = GetFile()
                 getFileMethod.fileId = photo.fileId
                 try {
-                    savePhoto(
+                    return savePhoto(
                         tgMethods.execDownloadFile(getFileMethod),
                         update.message.from.id.toString()
                     )
@@ -42,17 +43,18 @@ class LocalRepo(
                     e.printStackTrace()
                 }
             }
-            return
         }
 
         getDoc(update)?.let {doc->
             if(!doc.fileId.isNullOrEmpty()){
-                savePhoto(
+                return savePhoto(
                     tgMethods.execDownloadFile(GetFile(doc.fileId)),
                     update.message.from.id.toString()
                 )
             }
         }
+
+        return ""
     }
 
     private fun savePhoto(photo: File, id: String): String {
@@ -76,6 +78,7 @@ class LocalRepo(
             when(msg.document.fileName.substringAfter(".")){
                 "jpg" -> return msg.document
                 "png" -> return msg.document
+                "gif" -> return msg.document
                 else -> throw InvalidFormatException("Неподдерживаемый формат")
             }
         }else {

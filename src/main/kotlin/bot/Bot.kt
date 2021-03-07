@@ -1,7 +1,7 @@
 package bot
 
 import bot.exception.InvalidFormatException
-import bot.repo.LocalRepo
+import bot.repo.PhotoRepo
 import bot.repo.model.UserDAOImpl
 import bot.repo.model.UserModel
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
@@ -13,7 +13,7 @@ import java.util.*
 
 class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
-    private val repo = LocalRepo(UserDAOImpl(), this)
+    private val photoRepo = PhotoRepo(UserDAOImpl(), this)
     private val input = FileInputStream("app")
     private val properties: Properties = Properties()
 
@@ -41,9 +41,9 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
     override fun onUpdateReceived(update: Update?) {
         update?.let {
-            repo.rememberUser(UserModel.createFromTGUser(it.message.from))
+            photoRepo.rememberUser(UserModel.createFromTGUser(it.message.from))
             try {
-                repo.getPhoto(update)
+                photoRepo.getPhoto(update)
             }catch (e: InvalidFormatException){
                 val msg = SendMessage()
                 msg.chatId = it.message.from.id.toString()
