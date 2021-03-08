@@ -39,6 +39,7 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
         update?.let {
             msgHandler.handleCommands(update)
             msgHandler.handlePhoto(update)
+            msgHandler.handleAdditionalData(update)
         }
     }
 

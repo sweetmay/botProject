@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
-    kotlin("jvm") version "1.4.30"
-    id("org.jetbrains.kotlin.plugin.allopen") version "1.4.30"
+    kotlin("jvm") version "1.4.31"
+    id ("org.jetbrains.kotlin.plugin.jpa") version "1.4.31"
 }
 
 

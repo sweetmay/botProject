@@ -18,8 +18,8 @@ class PhotoRepo(
 ) : IPhotoRepo {
 
     override fun getPhoto(update: Update): String {
-
-        getPhotoSize(update)?.let { photo ->
+        if (update.message.hasPhoto()) {
+            val photo = getPhotoSize(update)
             if (!photo.filePath.isNullOrEmpty()) {
                 return savePhoto(
                     tgMethods.execDownloadFile(GetFile(photo.filePath)),
@@ -38,45 +38,41 @@ class PhotoRepo(
                 }
             }
         }
-
-        getDoc(update)?.let {doc->
-            if(!doc.fileId.isNullOrEmpty()){
+        if (update.message.hasDocument()) {
+            val doc = getDoc(update)
+            if (!doc.fileId.isNullOrEmpty()) {
                 return savePhoto(
                     tgMethods.execDownloadFile(GetFile(doc.fileId)),
                     update.message.from.id.toString()
                 )
             }
         }
-
         return ""
     }
 
     private fun savePhoto(photo: File, id: String): String {
-        val path = "UserData/" + id + "/" + photo.name.replaceAfter(".", "jpg")
+        val photoName = photo.name
+            .replaceAfter(".", "jpg")
+            .replaceBefore(".", id)
+
+        val path = "UserData/$id/$photoName"
         FileUtils.writeByteArrayToFile(File(path), photo.readBytes())
         return path
     }
 
-    private fun getPhotoSize(update: Update): PhotoSize? {
-        if (update.hasMessage() && update.message.hasPhoto()) {
-            val photos = update.message.photo
-            return photos.stream().max(Comparator.comparing(PhotoSize::getFileSize)).orElse(null)
-        } else {
-            return null
-        }
+    private fun getPhotoSize(update: Update): PhotoSize {
+        val photos = update.message.photo
+        return photos.stream().max(Comparator.comparing(PhotoSize::getFileSize))
+            .orElse(null)
     }
 
-    private fun getDoc(update: Update): Document? {
+    private fun getDoc(update: Update): Document {
         val msg = update.message
-        if(update.hasMessage() && msg.hasDocument()){
-            when(msg.document.fileName.substringAfter(".")){
-                "jpg" -> return msg.document
-                "png" -> return msg.document
-                "gif" -> return msg.document
-                else -> throw InvalidFormatException("Неподдерживаемый формат")
-            }
-        }else {
-            return null
+        when (msg.document.fileName.substringAfter(".")) {
+            "jpg" -> return msg.document
+            "png" -> return msg.document
+            "gif" -> return msg.document
+            else -> throw InvalidFormatException("Неподдерживаемый формат")
         }
     }
 }
