@@ -9,7 +9,6 @@ import java.lang.reflect.TypeVariable
 
 interface BaseTelegramMethods {
     fun execDownloadFile(getFile: GetFile): File
-    fun showError(msg: SendMessage)
-    fun askForData(msg: SendMessage)
+    fun execSendMessage(msg: SendMessage)
     fun replyWithResult(qrResult: SendPhoto)
 }

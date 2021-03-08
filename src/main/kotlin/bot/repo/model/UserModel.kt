@@ -22,10 +22,9 @@ data class UserModel(
 
     companion object {
         fun createFromTGUser(user: User): UserModel {
-            return UserModel(
-                user.id,
+            return UserModel(user.id,
                 user.firstName,
-                user.lastName,
+                user.lastName?:"",
                 "",
                 "")
         }

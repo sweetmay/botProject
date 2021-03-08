@@ -10,7 +10,10 @@ import org.telegram.telegrambots.meta.api.objects.Document
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 
 
 class PhotoRepo(
@@ -48,6 +51,31 @@ class PhotoRepo(
             }
         }
         return ""
+    }
+
+    override fun getQrResult(userModel: UserModel): String {
+        val execString = "myqr ${userModel.encode_data} " +
+                "-p ${userModel.photo_path} " +
+                "-c " +
+                "-d UserData/${userModel.id}"
+
+        val process = Runtime.getRuntime()
+            .exec(execString)
+        val outStream = process.inputStream
+
+        val reader = BufferedReader(
+            InputStreamReader(outStream,
+                StandardCharsets.UTF_8)
+        )
+
+        var qrPath = String()
+        reader.lines().forEach {
+            if (it.startsWith("Check")) {
+                qrPath = it.substringAfter(": ")
+                return@forEach
+            }
+        }
+        return qrPath
     }
 
     private fun savePhoto(photo: File, id: String): String {

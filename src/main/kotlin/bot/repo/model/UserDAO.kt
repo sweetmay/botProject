@@ -5,4 +5,5 @@ interface UserDAO {
     fun saveOrUpdate(userModel: UserModel)
     fun updateUser(userModel: UserModel)
     fun findAllUsers(): List<UserModel>
+    fun removePastDataForAllUsers(userModel: List<UserModel>)
 }

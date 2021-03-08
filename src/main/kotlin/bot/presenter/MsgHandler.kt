@@ -10,10 +10,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
 
 class MsgHandler(
     private val userDAO: UserDAO,
@@ -24,113 +21,117 @@ class MsgHandler(
     private val currentUsers: ArrayList<UserModel> = userDAO.findAllUsers()
             as ArrayList<UserModel>
 
+    /**
+     * Handle incoming commands
+     */
     override fun handleCommands(update: Update) {
         val msg = update.message
-        if (msg.isCommand && msg.text.equals("/start")) {
-            val user = UserModel.createFromTGUser(msg.from)
-            if (!currentUsers.contains(user)) {
-                currentUsers.add(user)
-                userDAO.saveOrUpdate(user)
-            }
-
-            val greetMsg = SendMessage.builder()
-                .chatId(msg.from.id.toString())
-                .text("Hi, Send me any picture and I will convert it into a beautiful QR code")
-                .build()
-            tgMethods.askForData(greetMsg)
+        saveUser(update)
+        if(msg.isCommand && msg.text == "/start"){
+            sendMessage(msg.from.id.toString(),
+                "Hi, send me any picture and I will convert it into a qr code")
         }
     }
 
-    override fun handlePhoto(update: Update) {
+    private fun saveUser(update: Update) {
+        val user = UserModel.createFromTGUser(update.message.from)
+        if (!currentUsers.contains(user)) {
+            currentUsers.add(user)
+            saveOrUpdateUser(user)
+        }
+
+    }
+
+    /**
+     * Handle incoming photo/document
+     */
+    override fun handlePhotoOrDoc(update: Update) {
         val msg = update.message
-        if(update.hasMessage() &&
-            (update.message.hasPhoto() || update.message.hasDocument())){
+        saveUser(update)
+        if(msg.hasPhoto() || msg.hasDocument()){
+            val user = getCurrentUser(msg)
             try {
-                val savedPicPath = photoRepo.getPhoto(update)
-                val curUser = currentUsers.find {
-                        user -> user.id == msg.from.id
+                user?.let {it->
+                    it.photo_path = photoRepo.getPhoto(update)
+                    saveOrUpdateUser(it)
+                    tryToMakeQr(user)
                 }
-                curUser?.photo_path = savedPicPath
-                curUser?.let { userDAO.updateUser(it) }
-
-                if(curUser?.encode_data.isNullOrEmpty()){
-                    val encodeMsg = SendMessage.builder()
-                        .chatId(msg.from.id.toString())
-                        .text("Great!, now send me a link to encode or just a plain text")
-                        .build()
-                    tgMethods.askForData(encodeMsg)
-                }else {
-                    curUser?.let {
-                        sendQrResult(convertToQr(it), it)
-                    }
-                }
-
-            } catch (e: InvalidFormatException) {
-                val errorMsg = SendMessage.builder()
-                    .chatId(msg.from.id.toString())
-                    .text("Invalid file format")
-                    .build()
-                tgMethods.showError(errorMsg)
+            }catch (e: InvalidFormatException){
+                sendMessage(msg.from.id.toString(),
+                    "Invalid format")
             }
-            }
+
+        }
     }
 
-    override fun handleAdditionalData(update: Update) {
+    /**
+     * Handle incoming messages to encode
+     */
+    override fun handleMessageToEncode(update: Update) {
         val msg = update.message
-        if (!msg.isCommand && !msg.text.isNullOrEmpty()) {
-            val user = currentUsers.find { user -> user.id == msg.from.id }
-            user?.encode_data = msg.text
-
-            if(!user?.photo_path.isNullOrEmpty()){
-                sendMsgProcessing(msg)
-                user?.let { sendQrResult(convertToQr(it), it) }
-            }else {
-                sendMsgPhotoAsk(msg)
+        saveUser(update)
+        if(!msg.isCommand && msg.hasText()){
+            val user = getCurrentUser(msg)
+            user?.let {it->
+                it.encode_data = msg.text
+                saveOrUpdateUser(it)
+                tryToMakeQr(user)
             }
         }
     }
 
-    private fun sendMsgPhotoAsk(msg: Message) {
-        val askForPhoto = SendMessage.builder()
-            .chatId(msg.from.id.toString())
-            .text("Alright... what photo we should encode this message into? (send me a photo or a document)")
-            .build()
-        tgMethods.askForData(askForPhoto)
+    private fun getCurrentUser(msg: Message): UserModel? {
+        return currentUsers.find { userModel ->
+            userModel.id == msg.from.id
+        }
     }
 
-    private fun sendQrResult(file: File, userModel: UserModel){
-        val qrMsg = SendPhoto.builder()
-            .chatId(userModel.id.toString())
+    private fun tryToMakeQr(userModel: UserModel?) {
+        userModel?.let {user->
+            if(user.photo_path.isNotEmpty() && user.encode_data.isNotEmpty()){
+
+                sendMessage(user.id.toString(), "Processing...")
+
+                sendQrPhoto(user, File(photoRepo.getQrResult(user)))
+
+                user.clearPastData()
+                userDAO.saveOrUpdate(user)
+                return
+            }
+
+            if(user.photo_path.isNullOrEmpty()){
+                sendMessage(user.id.toString(), "Great! Now send me a picture")
+            }
+
+            if(user.encode_data.isNullOrEmpty()){
+                sendMessage(user.id.toString(), "Great! Now send me a link or a message to encode")
+            }
+        }
+    }
+
+    /**
+     * DB interaction
+     */
+    override fun saveOrUpdateUser(userModel: UserModel) {
+        userDAO.saveOrUpdate(userModel)
+    }
+
+    private fun sendMessage(chatId: String, msgText: String) {
+        val sendMessage = SendMessage
+            .builder()
+            .chatId(chatId)
+            .text(msgText)
+            .build()
+        tgMethods.execSendMessage(sendMessage)
+    }
+
+    private fun sendQrPhoto(userModel: UserModel, file: File){
+        val sendPhoto = SendPhoto
+            .builder()
             .photo(InputFile(file))
+            .chatId(userModel.id.toString())
             .caption("Encoded message: ${userModel.encode_data}")
             .build()
-        tgMethods.replyWithResult(qrMsg)
-        userModel.clearPastData()
-        userDAO.updateUser(userModel)
-    }
-
-    private fun convertToQr(userModel: UserModel): File {
-        val execString = "myqr ${userModel.encode_data} -p ${userModel.photo_path} -c -d UserData/${userModel.id}"
-        val process = Runtime.getRuntime()
-            .exec(execString)
-        val outStream = process.inputStream
-        val reader =
-            BufferedReader(InputStreamReader(outStream, StandardCharsets.UTF_8))
-        var qrPath = String()
-        reader.lines().forEach {
-            if(it.startsWith("Check")){
-                qrPath = it.substringAfter(": ")
-                return@forEach
-            }
-        }
-        return File(qrPath)
-    }
-
-    private fun sendMsgProcessing(message: Message){
-        val processingMsg = SendMessage.builder()
-            .chatId(message.from.id.toString())
-            .text("Processing...")
-            .build()
-        tgMethods.askForData(processingMsg)
+        tgMethods.replyWithResult(sendPhoto)
     }
 }

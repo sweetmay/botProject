@@ -39,4 +39,18 @@ class UserDAOImpl : UserDAO{
             .createQuery("from UserModel", UserModel::class.java)
             .list() as List<UserModel>
     }
+
+
+    override fun removePastDataForAllUsers(userModel: List<UserModel>) {
+        val session: Session = HibernateSessionFactoryUtil
+            .getSessionFactory()
+            .openSession()
+        val tx1: Transaction = session.beginTransaction()
+        userModel.forEach {
+            it.clearPastData()
+            session.update(it)
+        }
+        tx1.commit()
+        session.close()
+    }
 }

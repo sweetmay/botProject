@@ -38,8 +38,8 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
     override fun onUpdateReceived(update: Update?) {
         update?.let {
             msgHandler.handleCommands(update)
-            msgHandler.handlePhoto(update)
-            msgHandler.handleAdditionalData(update)
+            msgHandler.handlePhotoOrDoc(update)
+            msgHandler.handleMessageToEncode(update)
         }
     }
 
@@ -48,13 +48,10 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
         return downloadFile(file)
     }
 
-    override fun showError(msg: SendMessage) {
+    override fun execSendMessage(msg: SendMessage) {
         execute(msg)
     }
 
-    override fun askForData(msg: SendMessage) {
-        execute(msg)
-    }
 
     override fun replyWithResult(qrResult: SendPhoto) {
         execute(qrResult)
