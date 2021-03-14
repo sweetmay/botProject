@@ -1,14 +1,14 @@
 package bot.repo
 
 import bot.BaseTelegramMethods
+import bot.exception.EncodeStringException
 import bot.exception.InvalidFormatException
-import bot.repo.model.UserDAO
 import bot.repo.model.UserModel
 import org.apache.commons.io.FileUtils
 import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.objects.Document
-import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
+import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import java.io.BufferedReader
 import java.io.File
@@ -53,8 +53,11 @@ class PhotoRepo(
         return ""
     }
 
-    override fun getQrResult(userModel: UserModel): String {
-        val execString = "myqr ${userModel.encode_data} " +
+    override fun getQrResult(userModel: UserModel): String{
+
+        val encodeString = userModel.encode_data
+
+        val execString = "myqr ${transformStringToEncode(encodeString)} " +
                 "-p ${userModel.photo_path} " +
                 "-c " +
                 "-d UserData/${userModel.id}"
@@ -76,6 +79,17 @@ class PhotoRepo(
             }
         }
         return qrPath
+    }
+
+    private fun transformStringToEncode(encodeString: String): String {
+        encodeString.trim()
+        if(encodeString.length == 1){
+            throw EncodeStringException("Sorry, can't encode one symbol, try another text")
+        }
+        if(encodeString.contains(' ')){
+            return encodeString.replace(' ', '_')
+        }
+        return encodeString
     }
 
     private fun savePhoto(photo: File, id: String): String {

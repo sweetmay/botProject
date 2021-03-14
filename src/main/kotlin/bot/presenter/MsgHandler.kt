@@ -1,6 +1,7 @@
 package bot.presenter
 
 import bot.BaseTelegramMethods
+import bot.exception.EncodeStringException
 import bot.exception.InvalidFormatException
 import bot.repo.IPhotoRepo
 import bot.repo.model.UserDAO
@@ -72,10 +73,14 @@ class MsgHandler(
         saveUser(update)
         if(!msg.isCommand && msg.hasText()){
             val user = getCurrentUser(msg)
-            user?.let {it->
-                it.encode_data = msg.text
-                saveOrUpdateUser(it)
-                tryToMakeQr(user)
+            try {
+                user?.let {it->
+                    it.encode_data = msg.text
+                    saveOrUpdateUser(it)
+                    tryToMakeQr(user)
+                }
+            }catch (e: EncodeStringException){
+                sendMessage(user?.id.toString(), e.message!!)
             }
         }
     }

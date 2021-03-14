@@ -3,6 +3,7 @@ package bot
 import bot.presenter.IMsgHandler
 import bot.presenter.MsgHandler
 import bot.repo.PhotoRepo
+import bot.repo.model.UserDAO
 import bot.repo.model.UserDAOImpl
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.GetFile
@@ -14,7 +15,10 @@ import java.util.*
 
 class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
-    private val msgHandler: IMsgHandler = MsgHandler(UserDAOImpl(), PhotoRepo(this), this)
+    private val userDao: UserDAO = UserDAOImpl()
+    private val msgHandler: IMsgHandler = MsgHandler(userDao,
+        PhotoRepo(this),
+        this)
     private val input = FileInputStream("app")
     private val properties: Properties = Properties()
 
@@ -26,6 +30,7 @@ class Bot: TelegramLongPollingBot(), BaseTelegramMethods {
 
     init {
         properties.load(input)
+        userDao.removePastDataForAllUsers(userDao.findAllUsers())
     }
 
     override fun getBotToken(): String =
